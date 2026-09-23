@@ -1,114 +1,82 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import './App.css';
+
+const initialPlayers = [
+  { id: 1, name: 'Acro', fetched: 0, present: true, color: 'purple' },
+  { id: 2, name: 'Henry', fetched: 0, present: true, color: 'teal' },
+  { id: 3, name: 'Michel', fetched: 0, present: false, color: 'cyan' },
+  { id: 4, name: 'Niels', fetched: 0, present: false, color: 'violet' },
+  { id: 5, name: 'Sander', fetched: 0, present: false, color: 'red' },
+  { id: 6, name: 'Robin', fetched: 0, present: false, color: 'blue' },
+  { id: 7, name: 'William', fetched: 0, present: false, color: 'orange' },
+  { id: 8, name: 'Anne', fetched: 0, present: false, color: 'pink' },
+  { id: 9, name: 'Ewout', fetched: 0, present: false, color: 'green' },
+  { id: 10, name: 'Gerold', fetched: 0, present: false, color: 'yellow' },
+];
+
+function FootballIcon() { return <span className="football-icon">⚽</span>; }
+function TrophyIcon() { return <span className="trophy-icon">♜</span>; }
 
 export default function App() {
-  // Dit is onze tijdelijke 'dummy' data om het scherm te vullen
-  const [players, setPlayers] = useState([
-    { id: 1, name: 'Acro', fetched: 0, ratio: 0.00, present: true },
-    { id: 2, name: 'Henry', fetched: 0, ratio: 0.00, present: true },
-    { id: 3, name: 'Michel', fetched: 0, ratio: 0.00, present: false },
-    { id: 4, name: 'Niels', fetched: 0, ratio: 0.00, present: false },
-  ]);
+  const [players, setPlayers] = useState(initialPlayers);
+  const [guestCount, setGuestCount] = useState(0);
+  const [activeTab, setActiveTab] = useState('match');
+  const presentCount = players.filter((player) => player.present).length + guestCount;
+  const allActive = presentCount >= 10;
 
-  // Bereken hoeveel spelers er op 'aanwezig' staan
-  const presentCount = players.filter(p => p.present).length;
+  const rankedPlayers = useMemo(() => [...players].sort((a, b) => a.fetched - b.fetched), [players]);
 
-  // Functie om de schakelaar om te zetten
-  const togglePresence = (id) => {
-    setPlayers(players.map(p => 
-      p.id === id ? { ...p, present: !p.present } : p
-    ));
-  };
+  const togglePresence = (id) => setPlayers((current) => current.map((player) => (
+    player.id === id ? { ...player, present: !player.present } : player
+  )));
+
+  const changeFetched = (id, amount) => setPlayers((current) => current.map((player) => (
+    player.id === id ? { ...player, fetched: Math.max(0, player.fetched + amount) } : player
+  )));
 
   return (
-    <div className="min-h-screen bg-app-bg text-white p-4 font-sans pb-24">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 pt-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <span className="text-app-green">⚽</span> Match Day
-          </h1>
-          <p className="text-gray-400 text-sm">Dinsdag 20:00 · De Burgthof</p>
-        </div>
-        <button className="bg-app-card px-3 py-1.5 rounded-lg text-sm border border-gray-700">
-          + Speler
-        </button>
-      </div>
+    <main className="phone-shell">
+      <div className="status-bar"><span>10:17</span><span className="dynamic-island" /><span className="status-icons">▮▮▮　⌁　▱</span></div>
+      {activeTab === 'match' ? (
+        <section className="screen match-screen">
+          <header className="page-header">
+            <div><h1><FootballIcon /> Match Day</h1><p className="event-pill">Dinsdag 20:00 · De Burgthof</p></div>
+            <button className="secondary-button" type="button">＋ <span>Speler</span></button>
+          </header>
 
-      {/* Grote Groene Kaart: Wie is er aan de beurt? */}
-      <div className="bg-app-green rounded-2xl p-5 mb-4 shadow-lg shadow-app-green/20 relative overflow-hidden">
-        <div className="text-green-900 font-bold text-xs mb-2 tracking-wider">DRANKBEURT DEZE WEEK</div>
-        <h2 className="text-4xl font-extrabold text-white">Acro</h2>
-      </div>
+          <section className="turn-card">
+            <span className="turn-label">♔ DRANKBEURT DEZE WEEK</span>
+            <h2>{allActive ? 'Acro' : 'Niemand aangemeld'}</h2>
+            {!allActive && <p>Zet de schakelaar op aanwezig bij een speler om de drankbeurt te bepalen.</p>}
+            {allActive && <span className="present-tag">Aanwezig</span>}
+          </section>
 
-      {/* Aanwezigheid Status Kaart */}
-      <div className="bg-app-card border border-app-green/30 rounded-2xl p-4 mb-6">
-         <div className="text-app-green font-bold text-xs mb-1 uppercase tracking-wider">Aanwezigheid Match Day</div>
-         <div className="flex justify-between items-end">
-            <div>
-                <span className="text-2xl font-bold text-app-green">{presentCount}</span>
-                <span className="text-app-green"> / 10 spelers</span>
-            </div>
-            {presentCount >= 10 ? (
-              <div className="bg-app-green/20 text-app-green px-2 py-1 rounded text-xs font-semibold">
-                Compleet (≥10)
-              </div>
-            ) : (
-              <div className="bg-red-500/20 text-red-500 px-2 py-1 rounded text-xs font-semibold">
-                Te weinig (&lt;10)
-              </div>
-            )}
-         </div>
-      </div>
+          <section className={`attendance-card ${allActive ? 'complete' : 'incomplete'}`}>
+            <div><strong>AANWEZIGHEID<br />MATCH DAY</strong><div className="attendance-number">{presentCount} <small>/ 10 spelers</small></div><p>{presentCount} vast + {guestCount} gast · {allActive ? 'Complete bezetting voor 5 tegen 5!' : `Nog ${Math.max(0, 10 - presentCount)} nodig voor 10 spelers`}</p></div>
+            <span className="attendance-status">{allActive ? '♧ Compleet (≥10)' : '⚠ Te weinig (&lt;10)'}</span>
+          </section>
 
-      {/* Titel boven de lijst */}
-      <div className="flex justify-between items-end mb-4">
-        <h3 className="font-bold text-lg leading-tight">Aanwezigheid &<br/>Beurtvolgorde</h3>
-        <span className="text-gray-400 text-xs text-right">Volgorde op laagste<br/>ratio</span>
-      </div>
-
-      {/* Spelerslijst met schakelaars */}
-      <div className="bg-app-card rounded-2xl overflow-hidden">
-        {players.map(player => (
-          <div key={player.id} className="flex items-center justify-between p-4 border-b border-gray-800 last:border-0">
-            <div className="flex items-center gap-3">
-              
-              {/* De Schakelaar (Toggle) */}
-              <button
-                onClick={() => togglePresence(player.id)}
-                className={`w-12 h-6 rounded-full transition-colors relative ${player.present ? 'bg-app-green' : 'bg-gray-600'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${player.present ? 'translate-x-6' : 'translate-x-0.5'}`}></div>
-              </button>
-              
-              <div>
-                <div className="font-bold text-base">{player.name}</div>
-                <div className="text-xs text-gray-400">{player.fetched}x gehaald · ratio {player.ratio.toFixed(2)}</div>
-              </div>
-            </div>
-            
-            {/* Knoppen om bier-aantal aan te passen */}
-            <div className="flex items-center gap-2">
-               <button className="bg-[#2a2a2a] w-8 h-8 rounded-lg flex items-center justify-center text-gray-400">-1</button>
-               <div className="text-sm w-[45px] text-center text-gray-400">{player.fetched}x 🍺</div>
-               <button className="bg-[#2a2a2a] w-8 h-8 rounded-lg flex items-center justify-center text-white">+1</button>
-            </div>
+          <div className="list-heading"><h3>Aanwezigheid &amp;<br />Beurtvolgorde</h3><span>Volgorde op laagste<br />ratio</span></div>
+          <div className="players-list">
+            <div className="guest-row"><span className="people-icon">♧</span><div className="player-info"><b>Gastspelers /<br />Invallers</b><span>Tellen mee voor<br />opkomst</span></div><span className="minus-label">-1</span><span className="guest-count">{guestCount} gasten</span><button className="round-button" type="button" onClick={() => setGuestCount((count) => count + 1)}>+1</button></div>
+            {players.map((player) => <PlayerRow key={player.id} player={player} togglePresence={togglePresence} changeFetched={changeFetched} />)}
           </div>
-        ))}
-      </div>
-
-      {/* Navigatiebalk onderaan */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-app-card border border-gray-700 rounded-full px-8 py-3 flex gap-10 shadow-2xl z-50">
-        <button className="flex flex-col items-center text-app-green">
-           <span className="text-xl">⚽</span>
-           <span className="text-[10px] mt-1 font-medium">Match Day</span>
-        </button>
-        <button className="flex flex-col items-center text-gray-500">
-           <span className="text-xl">🏆</span>
-           <span className="text-[10px] mt-1 font-medium">Stand</span>
-        </button>
-      </div>
-
-    </div>
+        </section>
+      ) : (
+        <Standings players={rankedPlayers} setActiveTab={setActiveTab} />
+      )}
+      <nav className="bottom-nav">
+        <button className={activeTab === 'match' ? 'active' : ''} type="button" onClick={() => setActiveTab('match')}><FootballIcon /><span>Match Day</span></button>
+        <button className={activeTab === 'stand' ? 'active' : ''} type="button" onClick={() => setActiveTab('stand')}><TrophyIcon /><span>Stand</span></button>
+      </nav>
+    </main>
   );
+}
+
+function PlayerRow({ player, togglePresence, changeFetched }) {
+  return <div className="player-row"><button className={`toggle ${player.present ? 'on' : ''}`} onClick={() => togglePresence(player.id)} type="button" aria-label={`Aanwezigheid ${player.name}`}><span /></button><div className="player-info"><b>{player.name}</b><span>{player.fetched}x gehaald · ratio {player.fetched.toFixed(2)}</span></div><span className="minus-label">-1</span><button className="beer-count" type="button" onClick={() => changeFetched(player.id, 0)}>{player.fetched}x 🍺</button><button className="round-button" type="button" onClick={() => changeFetched(player.id, 1)}>+1</button></div>;
+}
+
+function Standings({ players, setActiveTab }) {
+  return <section className="screen standings-screen"><header className="stand-header"><div><h1>Drankstand</h1><p>Ranglijst op basis van beurt-ratio</p></div><button className="secondary-button" type="button" onClick={() => setActiveTab('match')}>Match Day →</button></header><div className="next-player"><span className="beer-avatar">🍺</span><div><strong>EERST AAN DE BEURT</strong><b>{players[0].name} <small>(0% beurt-ratio)</small></b></div><span>0x gehaald</span></div><div className="stat-grid"><div>Gem. beurt-ratio<strong>0%</strong><small>Lager = sneller aan de beurt</small></div><div>Actieve spelers<strong>18</strong><small>In de zaalvoetbalgroep</small></div></div><div className="ranking-title"><h2>Ranglijst (laag naar hoog)</h2><p>Wie de laagste ratio heeft betaalt of haalt de volgende bak na de wedstrijd.</p></div><div className="ranking-list">{players.map((player, index) => <div className="ranking-row" key={player.id}><em>{index + 1}</em><span className={`initial ${player.color}`}>{player.name[0]}</span><div><b>{player.name}</b><small>0x gehaald · 0 duels gespeeld</small></div><strong>0.00<small>0% ratio</small></strong></div>)}</div></section>;
 }
