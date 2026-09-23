@@ -1,0 +1,18 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        'app-bg': '#121212',
+        'app-card': '#1a1a1a',
+        'app-green': '#1DB954',
+        'app-red': '#E53935',
+      }
+    },
+  },
+  plugins: [],
+}
