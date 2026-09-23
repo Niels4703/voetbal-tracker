@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './App.css';
+
+const STORAGE_KEY = 'voetbal-tracker-match-state-v1';
 
 const initialPlayers = [
   { id: 1, name: 'Acro', fetched: 0, present: true, color: 'purple' },
@@ -14,15 +16,43 @@ const initialPlayers = [
   { id: 10, name: 'Gerold', fetched: 0, present: false, color: 'yellow' },
 ];
 
+function loadSavedState() {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (!saved) return { players: initialPlayers, guestCount: 0 };
+
+    const parsed = JSON.parse(saved);
+    const savedPlayers = Array.isArray(parsed.players) ? parsed.players : [];
+    const players = initialPlayers.map((initialPlayer) => {
+      const savedPlayer = savedPlayers.find((player) => player.id === initialPlayer.id);
+      return savedPlayer
+        ? { ...initialPlayer, present: Boolean(savedPlayer.present), fetched: Math.max(0, Number(savedPlayer.fetched) || 0) }
+        : initialPlayer;
+    });
+
+    return {
+      players,
+      guestCount: Math.max(0, Number(parsed.guestCount) || 0),
+    };
+  } catch {
+    return { players: initialPlayers, guestCount: 0 };
+  }
+}
+
 function FootballIcon() { return <span className="football-icon">⚽</span>; }
 function TrophyIcon() { return <span className="trophy-icon">♜</span>; }
 
 export default function App() {
-  const [players, setPlayers] = useState(initialPlayers);
-  const [guestCount, setGuestCount] = useState(0);
+  const [savedState] = useState(loadSavedState);
+  const [players, setPlayers] = useState(savedState.players);
+  const [guestCount, setGuestCount] = useState(savedState.guestCount);
   const [activeTab, setActiveTab] = useState('match');
   const presentCount = players.filter((player) => player.present).length + guestCount;
   const allActive = presentCount >= 10;
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ players, guestCount }));
+  }, [players, guestCount]);
 
   const rankedPlayers = useMemo(() => [...players].sort((a, b) => a.fetched - b.fetched), [players]);
 
@@ -53,7 +83,7 @@ export default function App() {
 
           <section className={`attendance-card ${allActive ? 'complete' : 'incomplete'}`}>
             <div><strong>AANWEZIGHEID<br />MATCH DAY</strong><div className="attendance-number">{presentCount} <small>/ 10 spelers</small></div><p>{presentCount} vast + {guestCount} gast · {allActive ? 'Complete bezetting voor 5 tegen 5!' : `Nog ${Math.max(0, 10 - presentCount)} nodig voor 10 spelers`}</p></div>
-            <span className="attendance-status">{allActive ? '♧ Compleet (≥10)' : '⚠ Te weinig (&lt;10)'}</span>
+            <span className="attendance-status">{allActive ? '♧ Compleet (≥10)' : '⚠ Te weinig (<10)'}</span>
           </section>
 
           <div className="list-heading"><h3>Aanwezigheid &amp;<br />Beurtvolgorde</h3><span>Volgorde op laagste<br />ratio</span></div>
